@@ -7,28 +7,25 @@ import { wauthparam } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/confi
 document.addEventListener("DOMContentLoaded", async () => {
   let token = CihuyGetCookie("login");
 
-  // Jika cookie login ada, periksa validitas login
-  if (token) {
-    const postApiUrlMenu = "https://simbe-dev.ulbi.ac.id/api/v1/menu/";
-
-    try {
-      // Lakukan permintaan POST
-      try {
-        const postResult = await CihuyGetHeaders(postApiUrlMenu, token);
-        const responseData = JSON.parse(postResult);
-        processResponseData(responseData);
-      } catch (error) {
-        console.error("Error:", error.message, error.response); // Tambahkan log lebih banyak di sini
-      }
-
-      // Proses validasi dan pengalihan halaman
-      processResponseData(responseData);
-    } catch (error) {
-      console.error("Error:", error);
-    }
-  } else {
-    // Jika tidak ada cookie, munculkan SweetAlert untuk login QR code
+  // Jika tidak ada token, langsung tampilkan SweetAlert untuk login QR code
+  if (!token) {
     openSweetAlertLogin();
+    return; // Hentikan eksekusi lebih lanjut jika tidak ada token
+  }
+
+  // Jika token ada, periksa validitas login
+  const postApiUrlMenu = "https://simbe-dev.ulbi.ac.id/api/v1/menu/";
+
+  try {
+    // Lakukan permintaan POST
+    const postResult = await CihuyGetHeaders(postApiUrlMenu, token);
+    const responseData = JSON.parse(postResult);
+
+    // Proses validasi dan pengalihan halaman
+    processResponseData(responseData);
+  } catch (error) {
+    console.error("Error:", error.message || error);
+    openSweetAlertLogin(); // Tampilkan SweetAlert jika terjadi error (misal 401)
   }
 });
 
@@ -39,11 +36,12 @@ function processResponseData(responseData) {
 
   if (
     responseData.code === 400 &&
-    responseData.success === false &&
+    !responseData.success &&
     responseData.status === "Data user level tidak ditemukan" &&
-    responseData.data === null
+    !responseData.data
   ) {
     window.location.href = "https://euis.ulbi.ac.id/simpelbi/404.html";
+    return;
   } else if (dataUrl === "/admins") {
     targetPage = "dashboard-admins.html";
   } else if (dataUrl === "/prodi") {
@@ -54,15 +52,14 @@ function processResponseData(responseData) {
     targetPage = "dashboard-auditor.html";
   } else if (
     responseData.code === 401 &&
-    responseData.success === false &&
+    !responseData.success &&
     responseData.status === "Unauthorize Token" &&
-    responseData.data === null
+    !responseData.data
   ) {
     targetPage = "404.html";
   } else {
-    targetPage = "404.html";
     console.error("URL tidak sesuai");
-    return;
+    targetPage = "404.html";
   }
 
   const finalUrl = `https://euis.ulbi.ac.id/simpelbi${dataUrl}/${targetPage}`;
@@ -80,17 +77,15 @@ function openSweetAlertLogin() {
         </div>
         <p class="font-bold text-center mb-4" id="whatsauthcounter">Refresh your browser to get new QR</p>
         <p>Pastikan waktu hitung mundur cukup untuk melakukan scan dan kirim token</p>
-
         `,
     didRender: function () {
       // Definisikan wauthparam (URL WebSocket dan keyword)
-      wauthparam.auth_ws =
-        "d3NzOi8vZ3cudWxiaS5hYy5pZC93cy93aGF0c2F1dGgvcHVibGlj";
-      wauthparam.keyword =
-        "aHR0cHM6Ly93YS5tZS82MjgxMTIwMDAyNzk/dGV4dD13aDR0NWF1dGgw";
+      wauthparam.auth_ws = "d3NzOi8vZ3cudWxiaS5hYy5pZC93cy93aGF0c2F1dGgvcHVibGlj";
+      wauthparam.keyword = "aHR0cHM6Ly93YS5tZS82MjgxMTIwMDAyNzk/dGV4dD13aDR0NWF1dGgw";
       wauthparam.redirect = "#" + crypto.randomUUID();
 
       qrController(wauthparam);
+
       let wsconn = new WebSocket(atob(wauthparam.auth_ws));
 
       wsconn.onopen = function () {
@@ -106,7 +101,6 @@ function openSweetAlertLogin() {
         console.error("WebSocket error:", error);
       };
 
-      // Menangani ketika koneksi WebSocket ditutup
       wsconn.onclose = function () {
         console.log("WebSocket connection closed.");
       };
@@ -119,18 +113,6 @@ function openSweetAlertLogin() {
 }
 
 // Fungsi untuk menangani aksi pengguna setelah pemindaian QR code
-function closeSweetAlert() {
-  Swal.close();
-  // Setelah login berhasil, dapatkan data pengguna dengan token yang baru
-  getWithHeader(
-    "http://simpelbi.ulbi.ac.id/",
-    "login",
-    getCookie("login"),
-    getUserFunction
-  );
-  show("saveForm");
-}
-
 function catcher(result) {
   if (result.length > 2) {
     const jsonres = JSON.parse(result); // Hasil login dari pemindaian QR code
@@ -138,18 +120,16 @@ function catcher(result) {
 
     const tokenLifetime = 18; // Misal 18 jam
     setCookieWithExpireHour("login", jsonres.login, tokenLifetime);
-    setCookieWithExpireHour(
-      "ua",
-      btoa(jsonres.user_id + "-" + jsonres.user_name),
-      tokenLifetime
-    );
+    setCookieWithExpireHour("ua", btoa(jsonres.user_id + "-" + jsonres.user_name), tokenLifetime);
+
     window.location.replace("http://simpelbi.ulbi.ac.id/"); // Redirect ke halaman login default
   }
 }
 
+// Fungsi untuk menyetel cookie dengan waktu kedaluwarsa dalam jam
 function setCookieWithExpireHour(cname, cvalue, exhour) {
   const d = new Date();
   d.setTime(d.getTime() + exhour * 60 * 60 * 1000);
   let expires = "expires=" + d.toUTCString();
-  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+  document.cookie = `${cname}=${cvalue};${expires};path=/`;
 }
