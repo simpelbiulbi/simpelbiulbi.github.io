@@ -1,6 +1,6 @@
 import { CihuyGetCookie } from "https://c-craftjs.github.io/cookies/cookies.js";
 import { CihuyGetHeaders } from "https://c-craftjs.github.io/api/api.js";
-import { qrController, setCookieWithExpireHour } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/whatsauth.js";
+import { qrController } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/whatsauth.js";
 import { wauthparam } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/config.js";
 
 // Fungsi utama yang menggabungkan kedua alur
@@ -136,4 +136,11 @@ function catcher(result) {
     setCookieWithExpireHour("ua", btoa(jsonres.user_id + "-" + jsonres.user_name), tokenLifetime);
     window.location.replace("http://simpelbi.ulbi.ac.id/");  // Redirect ke halaman login default
   }
+}
+
+function setCookieWithExpireHour(cname, cvalue, exhour) {
+  const d = new Date();
+  d.setTime(d.getTime() + (exhour * 60 * 60 * 1000));
+  let expires = "expires="+d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
