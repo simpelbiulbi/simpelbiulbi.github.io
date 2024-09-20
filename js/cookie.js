@@ -1,6 +1,6 @@
 import { CihuyGetCookie } from "https://c-craftjs.github.io/cookies/cookies.js";
 import { CihuyGetHeaders } from "https://c-craftjs.github.io/api/api.js";
-import { qrController } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/whatsauth.js";
+import { qrController, setCookieWithExpireHour } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/whatsauth.js";
 import { wauthparam } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/config.js";
 
 // Fungsi utama yang menggabungkan kedua alur
@@ -85,8 +85,26 @@ function openSweetAlertLogin() {
         "aHR0cHM6Ly93YS5tZS82MjgxMTIwMDAyNzk/dGV4dD13aDR0NWF1dGgw";
       wauthparam.redirect = "#" + crypto.randomUUID();
 
-      // Panggil qrController untuk memulai QR code
       qrController(wauthparam);
+      let wsconn = new WebSocket(atob(wauthparam.auth_ws));
+
+      wsconn.onopen = function () {
+        console.log("WebSocket connected, waiting for QR scan...");
+      };
+
+      wsconn.onmessage = function (evt) {
+        let result = evt.data;  // Data hasil pemindaian dari server
+        catcher(result);  // Memproses hasil login setelah QR code berhasil dipindai
+      };
+
+      wsconn.onerror = function (error) {
+        console.error("WebSocket error:", error);
+      };
+
+      // Menangani ketika koneksi WebSocket ditutup
+      wsconn.onclose = function () {
+        console.log("WebSocket connection closed.");
+      };
     },
     showConfirmButton: false,
     allowOutsideClick: false,
@@ -100,10 +118,22 @@ function closeSweetAlert() {
   Swal.close();
   // Setelah login berhasil, dapatkan data pengguna dengan token yang baru
   getWithHeader(
-    "https://mrt.ulbi.ac.id/notif/ux/getdatauser",
+    "http://simpelbi.ulbi.ac.id/",
     "login",
     getCookie("login"),
     getUserFunction
   );
   show("saveForm");
+}
+
+function catcher(result) {
+  if (result.length > 2) {
+    const jsonres = JSON.parse(result); // Hasil login dari pemindaian QR code
+    console.log("Login berhasil, memproses hasil login...");
+
+    const tokenLifetime = 18;  // Misal 18 jam
+    setCookieWithExpireHour("login", jsonres.login, tokenLifetime);
+    setCookieWithExpireHour("ua", btoa(jsonres.user_id + "-" + jsonres.user_name), tokenLifetime);
+    window.location.replace("http://simpelbi.ulbi.ac.id/");  // Redirect ke halaman login default
+  }
 }
