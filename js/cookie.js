@@ -13,8 +13,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       // Lakukan permintaan POST
-      const postResult = await CihuyGetHeaders(postApiUrlMenu, token);
-      const responseData = JSON.parse(postResult);
+      try {
+        const postResult = await CihuyGetHeaders(postApiUrlMenu, token);
+        const responseData = JSON.parse(postResult);
+        processResponseData(responseData);
+      } catch (error) {
+        console.error("Error:", error.message, error.response); // Tambahkan log lebih banyak di sini
+      }
 
       // Proses validasi dan pengalihan halaman
       processResponseData(responseData);
@@ -93,8 +98,8 @@ function openSweetAlertLogin() {
       };
 
       wsconn.onmessage = function (evt) {
-        let result = evt.data;  // Data hasil pemindaian dari server
-        catcher(result);  // Memproses hasil login setelah QR code berhasil dipindai
+        let result = evt.data; // Data hasil pemindaian dari server
+        catcher(result); // Memproses hasil login setelah QR code berhasil dipindai
       };
 
       wsconn.onerror = function (error) {
@@ -131,16 +136,20 @@ function catcher(result) {
     const jsonres = JSON.parse(result); // Hasil login dari pemindaian QR code
     console.log("Login berhasil, memproses hasil login...");
 
-    const tokenLifetime = 18;  // Misal 18 jam
+    const tokenLifetime = 18; // Misal 18 jam
     setCookieWithExpireHour("login", jsonres.login, tokenLifetime);
-    setCookieWithExpireHour("ua", btoa(jsonres.user_id + "-" + jsonres.user_name), tokenLifetime);
-    window.location.replace("http://simpelbi.ulbi.ac.id/");  // Redirect ke halaman login default
+    setCookieWithExpireHour(
+      "ua",
+      btoa(jsonres.user_id + "-" + jsonres.user_name),
+      tokenLifetime
+    );
+    window.location.replace("http://simpelbi.ulbi.ac.id/"); // Redirect ke halaman login default
   }
 }
 
 function setCookieWithExpireHour(cname, cvalue, exhour) {
   const d = new Date();
-  d.setTime(d.getTime() + (exhour * 60 * 60 * 1000));
-  let expires = "expires="+d.toUTCString();
+  d.setTime(d.getTime() + exhour * 60 * 60 * 1000);
+  let expires = "expires=" + d.toUTCString();
   document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
