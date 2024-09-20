@@ -1,6 +1,6 @@
 import { CihuyGetCookie } from "https://c-craftjs.github.io/cookies/cookies.js";
 import { CihuyGetHeaders } from "https://c-craftjs.github.io/api/api.js";
-import { qrController, setCookieWithExpireHour } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/whatsauth.js";
+import { qrController } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/whatsauth.js";
 import { wauthparam } from "https://cdn.jsdelivr.net/gh/whatsauth/js@0.3.3/config.js";
 
 // Fungsi utama yang menggabungkan kedua alur
