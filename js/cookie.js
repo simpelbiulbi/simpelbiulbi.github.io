@@ -128,7 +128,7 @@ function catcher(result) {
       title: "Login berhasil!",
       text: "Halaman akan di-refresh dalam 3 detik...",
       showConfirmButton: false,
-      timer: 3000 // Tunggu 3 detik sebelum refresh otomatis
+      timer: 30000 // Tunggu 3 detik sebelum refresh otomatis
     });
 
     // Refresh otomatis setelah 3 detik
@@ -141,6 +141,6 @@ function catcher(result) {
 function setCookieWithExpireHourSubDomain(cname, cvalue, exhour) {
   const d = new Date();
   d.setTime(d.getTime() + (exhour * 60 * 60 * 1000));
-  let expires = "expires="+d.toUTCString();
-  document.cookie = cname + "=" + cvalue + ";" + expires + ";domain=.ulbi.ac.id;path=/";
+  let expires = "expires=" + d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";domain=.ulbi.ac.id;path=/;SameSite=None; Secure";
 }
