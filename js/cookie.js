@@ -122,24 +122,20 @@ function catcher(result) {
     setCookieWithExpireHourSubDomain("login", jsonres.login, tokenLifetime);
     setCookieWithExpireHourSubDomain("ua", btoa(jsonres.user_id + "-" + jsonres.user_name), tokenLifetime);
 
+    // Menampilkan pesan sukses dan refresh otomatis
     Swal.fire({
       icon: "success",
       title: "Login berhasil!",
-      text: "Anda akan dialihkan dalam beberapa detik...",
+      text: "Halaman akan di-refresh dalam 3 detik...",
       showConfirmButton: false,
-      timer: 3000 
-    }).then(() => {
-      window.location.replace("http://simpelbi.ulbi.ac.id/");
+      timer: 3000 // Tunggu 3 detik sebelum refresh otomatis
     });
-  }
-}
 
-// Fungsi untuk menyetel cookie dengan waktu kedaluwarsa dalam jam
-function setCookieWithExpireHour(cname, cvalue, exhour) {
-  const d = new Date();
-  d.setTime(d.getTime() + exhour * 60 * 60 * 1000);
-  let expires = "expires=" + d.toUTCString();
-  document.cookie = `${cname}=${cvalue};${expires};path=/`;
+    // Refresh otomatis setelah 3 detik
+    setTimeout(() => {
+      window.location.reload(); // Melakukan refresh halaman
+    }, 3000); // Waktu tunggu 3 detik sebelum refresh halaman
+  }
 }
 
 function setCookieWithExpireHourSubDomain(cname, cvalue, exhour) {
