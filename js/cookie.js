@@ -122,7 +122,15 @@ function catcher(result) {
     setCookieWithExpireHourSubDomain("login", jsonres.login, tokenLifetime);
     setCookieWithExpireHourSubDomain("ua", btoa(jsonres.user_id + "-" + jsonres.user_name), tokenLifetime);
 
-    window.location.replace("http://simpelbi.ulbi.ac.id/"); // Redirect ke halaman login default
+    Swal.fire({
+      icon: "success",
+      title: "Login berhasil!",
+      text: "Anda akan dialihkan dalam beberapa detik...",
+      showConfirmButton: false,
+      timer: 3000 
+    }).then(() => {
+      window.location.replace("http://simpelbi.ulbi.ac.id/");
+    });
   }
 }
 
